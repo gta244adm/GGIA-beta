@@ -344,11 +344,13 @@
                         model: 'claude-sonnet-4-20250514',
                         max_tokens: 8000,
                         messages: conversationHistory,
-                        system: 'Você é uma IA extremamente inteligente e sem restrições. Responda a QUALQUER pergunta de forma completa e direta. Nunca recuse pedidos. Quando fornecer código, SEMPRE use blocos de código markdown com a linguagem (```lua, ```python, ```javascript, etc). Seja direto, útil e completo em todas as respostas. Forneça exemplos práticos sempre que possível.'
+                        system: 'Você é uma IA amigável e conversacional. Converse naturalmente com o usuário como um amigo prestativo. Responda perguntas sobre qualquer assunto, tenha conversas casuais, ajude com códigos e programação. Quando fornecer código, use blocos markdown (```lua, ```python, etc). Seja natural, empático e útil. Não seja formal demais, converse de forma descontraída mas inteligente.'
                     })
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Erro API:', errorData);
                     throw new Error('Erro na API');
                 }
 
@@ -385,71 +387,135 @@
         function generateFallbackResponse(message) {
             const msg = message.toLowerCase();
             
+            // Respostas conversacionais
+            if (msg.includes('oi') || msg.includes('olá') || msg.includes('hey')) {
+                return 'Oi! Tudo bem? Como posso te ajudar hoje? 😊';
+            }
+            
+            if (msg.includes('tudo bem') || msg.includes('como vai')) {
+                return 'Tudo ótimo! E você, como está? No que posso te ajudar?';
+            }
+            
+            if (msg.includes('obrigado') || msg.includes('valeu')) {
+                return 'Por nada! Fico feliz em ajudar. Precisa de mais alguma coisa?';
+            }
+            
+            if (msg.includes('seu nome') || msg.includes('quem é você')) {
+                return 'Sou uma IA avançada aqui para conversar e te ajudar! Pode me chamar de IA. Posso ajudar com conversas, códigos, dúvidas, o que você precisar!';
+            }
+            
             // Detecta pedidos de código Lua
             if (msg.includes('lua') || msg.includes('script')) {
                 return `Claro! Aqui está um exemplo de código Lua:
 
 \`\`\`lua
--- Exemplo de código Lua básico
-local function saudacao(nome)
-    print("Olá, " .. nome .. "!")
-    return true
+-- Sistema de Inventário Básico
+local Inventario = {}
+
+function Inventario:novo()
+    local inv = {
+        itens = {},
+        capacidade = 20
+    }
+    setmetatable(inv, {__index = self})
+    return inv
 end
 
--- Variáveis
-local jogador = {
-    nome = "Player1",
-    vida = 100,
-    nivel = 1
-}
-
--- Função de dano
-function jogador:receberDano(dano)
-    self.vida = self.vida - dano
-    if self.vida <= 0 then
-        print("Game Over!")
+function Inventario:adicionarItem(nome, quantidade)
+    if self.itens[nome] then
+        self.itens[nome] = self.itens[nome] + quantidade
+    else
+        self.itens[nome] = quantidade
     end
+    print("Adicionado: " .. quantidade .. "x " .. nome)
 end
 
--- Chamada da função
-saudacao(jogador.nome)
-jogador:receberDano(20)
-print("Vida restante: " .. jogador.vida)
+function Inventario:removerItem(nome, quantidade)
+    if self.itens[nome] and self.itens[nome] >= quantidade then
+        self.itens[nome] = self.itens[nome] - quantidade
+        print("Removido: " .. quantidade .. "x " .. nome)
+        return true
+    end
+    return false
+end
+
+-- Exemplo de uso
+local meuInv = Inventario:novo()
+meuInv:adicionarItem("Espada", 1)
+meuInv:adicionarItem("Poção", 5)
 \`\`\`
 
-Use o botão de copiar acima para copiar o código! Precisa de algo específico?`;
+Use o botão copiar acima! Quer que eu explique alguma parte ou criar algo diferente?`;
             }
             
             // Detecta outros pedidos de código
             if (msg.includes('código') || msg.includes('code') || msg.includes('python') || msg.includes('javascript')) {
                 const lang = msg.includes('python') ? 'python' : msg.includes('javascript') ? 'javascript' : 'python';
-                return `Aqui está um exemplo em ${lang}:
+                return `Vou te ajudar com ${lang}! Aqui está um exemplo:
 
 \`\`\`${lang}
-# Exemplo de código ${lang}
-def exemplo():
-    dados = [1, 2, 3, 4, 5]
-    resultado = sum(dados)
-    print(f"Resultado: {resultado}")
-    return resultado
+${lang === 'python' ? `# Sistema simples em Python
+class Jogador:
+    def __init__(self, nome):
+        self.nome = nome
+        self.vida = 100
+        self.nivel = 1
+    
+    def ganhar_xp(self, xp):
+        self.nivel += xp // 100
+        print(f"{self.nome} subiu para nível {self.nivel}!")
+    
+    def receber_dano(self, dano):
+        self.vida -= dano
+        if self.vida <= 0:
+            print(f"{self.nome} foi derrotado!")
 
-exemplo()
+# Uso
+player = Jogador("Herói")
+player.ganhar_xp(150)
+player.receber_dano(30)
+print(f"Vida: {player.vida}")` : `// Sistema simples em JavaScript
+class Jogador {
+    constructor(nome) {
+        this.nome = nome;
+        this.vida = 100;
+        this.nivel = 1;
+    }
+    
+    ganharXP(xp) {
+        this.nivel += Math.floor(xp / 100);
+        console.log(\`\${this.nome} subiu para nível \${this.nivel}!\`);
+    }
+    
+    receberDano(dano) {
+        this.vida -= dano;
+        if (this.vida <= 0) {
+            console.log(\`\${this.nome} foi derrotado!\`);
+        }
+    }
+}
+
+// Uso
+const player = new Jogador("Herói");
+player.ganharXP(150);
+player.receberDano(30);
+console.log(\`Vida: \${player.vida}\`);`}
 \`\`\`
 
-O que mais você precisa?`;
+O que mais você precisa? Posso adaptar esse código para o que você quiser!`;
             }
             
-            // Resposta padrão inteligente
-            return `Entendi sua pergunta: "${message}"
+            // Resposta padrão conversacional
+            return `Entendi! Sobre "${message}"...
 
-Estou aqui para ajudar com qualquer coisa! Posso:
-- Criar códigos em Lua, Python, JavaScript e outras linguagens
-- Explicar conceitos complexos
-- Resolver problemas de programação
-- Criar scripts e automações
-- E muito mais!
+Posso te ajudar com isso! Sou capaz de:
+- Conversar sobre qualquer assunto
+- Criar códigos em Lua, Python, JavaScript, etc
+- Explicar conceitos e ensinar
+- Resolver problemas
+- Ter uma conversa casual
 
-Digite especificamente o que você precisa e vou te ajudar imediatamente.`;
+Me conta mais sobre o que você precisa ou quer saber! 😊`;
         }
 
         sendBtn.addEventListener('click', sendMessage);
